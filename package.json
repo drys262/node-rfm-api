@@ -1,0 +1,38 @@
+{
+  "name": "rfm-partner-backend",
+  "version": "0.1.0",
+  "description": "RFM Partner Back-End",
+  "author": "rhgroup-dev-d <rhgrouptest2@gmail.com>",
+  "homepage": "https://rfm-partner-graph.leadlinker.se",
+  "private": true,
+  "repository": "github:rhgroup-dev-d/rfm-partner-backend",
+  "dependencies": {
+    "apollo-server-express": "^2.19.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "graphql": "^15.4.0",
+    "helmet": "^4.2.0",
+    "lodash": "^4.17.20",
+    "pg": "^8.5.1",
+    "pg-hstore": "^2.3.3",
+    "sequelize": "^6.3.5",
+    "validator": "^13.5.1"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "husky": "^4.3.0",
+    "sequelize-cli": "^6.2.0",
+    "standard": "^16.0.3"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm test"
+    }
+  },
+  "scripts": {
+    "build": "sequelize-cli db:migrate",
+    "dev": "cross-env NODE_ENV=development node app.js",
+    "start": "node app.js",
+    "test": "standard"
+  }
+}
