@@ -1,3 +1,5 @@
+const fs = require('fs')
+const path = require('path')
 const {
   AuthenticationError,
   SchemaDirectiveVisitor,
@@ -37,9 +39,15 @@ const initialTypeDefs = gql`
 const resolvers = [initialResolvers]
 const typeDefs = [initialTypeDefs]
 
-const nodes = [
-  require('./node')
-]
+const nodes = fs.readdirSync(__dirname)
+  .filter((file) => {
+    return file.indexOf('.') !== 0 &&
+      file !== 'index.js' &&
+      file.slice(-3) === '.js'
+  })
+  .map((file) => {
+    return require(path.join(__dirname, file))
+  })
 
 for (const node of nodes) {
   if (node.resolvers) {
