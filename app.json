@@ -1,0 +1,29 @@
+{
+  "name": "rfm-partner-backend",
+  "description": "RFM Partner Back-End",
+  "stack": "heroku-20",
+  "addons": [
+    {
+      "plan": "heroku-postgresql",
+      "as": "DB_URL"
+    }
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "env": {
+    "NODE_ENV": {
+      "value": "test"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1
+    }
+  },
+  "scripts": {
+    "postdeploy": "npx sequelize-cli db:seed:all"
+  }
+}

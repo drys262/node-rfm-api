@@ -4,6 +4,8 @@ const initialConfig = {
   dialect: 'postgres',
   migrationStoragePath: 'sequelize',
   migrationStorageTableName: 'sequelize_migrations',
+  seederStorage: 'sequelize',
+  seederStorageTableName: 'sequelize_seeders',
 
   define: {
     underscored: true
