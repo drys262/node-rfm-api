@@ -1,0 +1,8 @@
+directive @guest on FIELD | FIELD_DEFINITION
+directive @user on FIELD | FIELD_DEFINITION
+
+# type Mutation
+type Query
+
+scalar DateTime
+scalar UUID

@@ -33,6 +33,7 @@
     "build": "sequelize-cli db:migrate",
     "dev": "cross-env NODE_ENV=development node app.js",
     "start": "node app.js",
-    "test": "standard"
+    "test": "standard",
+    "test-fix": "standard --fix"
   }
 }

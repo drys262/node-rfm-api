@@ -23,3 +23,6 @@ Runs the app in the production mode.
 
 ### `npm test`
 Launches the test runner.
+
+### `npm run test-fix`
+Launches the test runner and fixes code style issues.

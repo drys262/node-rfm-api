@@ -13,10 +13,7 @@ const initialConfig = {
 module.exports = {
   development: {
     ...initialConfig,
-    database: 'rfm_partner',
-    username: 'root',
-    password: null,
-    host: '127.0.0.1'
+    use_env_variable: 'DB_URL'
   },
   production: {
     ...initialConfig,

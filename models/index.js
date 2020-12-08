@@ -25,7 +25,7 @@ fs.readdirSync(__dirname)
   })
   .forEach((file) => {
     const model = require(path.join(__dirname, file))
-    models[model.name] = model.init(sequelize, Sequelize.DataTypes)
+    models[model.name] = model.init(sequelize)
   })
 
 Object.keys(models).forEach((modelName) => {

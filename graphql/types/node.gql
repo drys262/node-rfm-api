@@ -1,0 +1,8 @@
+interface Node {
+  databaseId: UUID!
+  id: ID!
+}
+
+extend type Query {
+  node (id: ID!): Node! @user
+}
