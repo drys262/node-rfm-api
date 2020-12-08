@@ -12,6 +12,11 @@ input RefreshTokenInput {
   email: String!
 }
 
+input ChangePasswordInput {
+  oldPassword: String!
+  newPassword: String!
+}
+
 type SignInPayload {
   accessToken: String!
   refreshToken: String!
@@ -25,8 +30,13 @@ type RefreshTokenPayload {
   accessToken: String!
 }
 
+type ChangePasswordPayload {
+  success: Boolean!
+}
+
 type Mutation {
-  signIn(input: SignInInput!): SignInPayload! @guest
+  changePassword(input: ChangePasswordInput!): ChangePasswordPayload! @user
   forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload! @guest
   refreshToken(input: RefreshTokenInput!): RefreshTokenPayload! @user
+  signIn(input: SignInInput!): SignInPayload! @guest
 }

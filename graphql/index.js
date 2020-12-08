@@ -2,6 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const { gql, makeExecutableSchema } = require('apollo-server-express')
 const { merge } = require('lodash')
+const context = require('./context')
 
 const directives = require('./directives')
 
@@ -28,5 +29,7 @@ module.exports = {
     schemaDirectives: directives,
     typeDefs: typeDefs
   }),
-  uploads: false
+  uploads: false,
+  playground: true,
+  context: context
 }
