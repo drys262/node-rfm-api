@@ -1,0 +1,32 @@
+
+input SignInInput {
+  email: String!
+  password: String! 
+}
+
+input ForgotPasswordInput {
+  email: String!
+}
+
+input RefreshTokenInput {
+  email: String!
+}
+
+type SignInPayload {
+  accessToken: String!
+  refreshToken: String!
+}
+
+type ForgotPasswordPayload {
+  success: Boolean!
+}
+
+type RefreshTokenPayload {
+  accessToken: String!
+}
+
+type Mutation {
+  signIn(input: SignInInput!): SignInPayload! @guest
+  forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload! @guest
+  refreshToken(input: RefreshTokenInput!): RefreshTokenPayload! @user
+}
