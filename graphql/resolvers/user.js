@@ -1,6 +1,8 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const { UserInputError, ApolloError } = require('apollo-server-express')
+const sendgrid = require('@sendgrid/mail')
+sendgrid.setApiKey(process.env.SENDGRID_API_KEY)
 const models = require('../../models')
 
 async function checkPassword (password, hash, email) {
@@ -18,18 +20,50 @@ async function createToken (payload, refresh = false) {
   )
 }
 
+async function getUserByEmail (
+  email,
+  ignoreError = false,
+  errorMessage = 'User not found'
+) {
+  const { User } = models
+
+  const user = await User.findOneByEmail(email)
+
+  if (!user && !ignoreError) {
+    throw new UserInputError(errorMessage, { email })
+  }
+
+  return user
+}
+
+async function sendEmail (params) {
+  const message = {
+    from: process.env.SENDGRID_EMAIL,
+    ...params
+  }
+
+  await sendgrid.send(message)
+}
+
+function generatePassword (length) {
+  let result = ''
+  const characters =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const charactersLength = characters.length
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(
+      Math.floor(Math.random() * charactersLength)
+    )
+  }
+  return result
+}
+
 module.exports.resolvers = {
   Mutation: {
     signIn: async (parent, args, ctx, info) => {
       const { email, password } = args.input
 
-      const { User } = models
-
-      const user = await User.findOneByEmail(email)
-
-      if (!user) {
-        throw new UserInputError('User not found', { email })
-      }
+      const user = await getUserByEmail(email)
 
       await checkPassword(password, user.password, email)
 
@@ -47,8 +81,36 @@ module.exports.resolvers = {
         throw new ApolloError(err.message)
       }
     },
-    forgotPassword: (parent, args, ctx, info) => {
-      // TODO: do logic sign in
+    forgotPassword: async (parent, args, ctx, info) => {
+      const { email } = args.input
+
+      const user = await getUserByEmail(
+        email,
+        true,
+        'Email is not found on our system.'
+      )
+
+      if (!user) {
+        return { success: true }
+      }
+
+      const newPassword = generatePassword(16)
+
+      try {
+        await sendEmail({
+          to: email,
+          subject: 'Your new RFM Password',
+          text: `Your new password: ${newPassword}`
+        })
+      } catch (err) {
+        throw new ApolloError(
+          'Our mail client crashed please contact system administrator'
+        )
+      }
+
+      await user.update({ password: await bcrypt.hash(newPassword, 10) })
+
+      return { success: true }
     },
     refreshToken: (parent, args, ctx, info) => {
       // TODO: do logic refesh token logic
