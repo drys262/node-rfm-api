@@ -1,20 +1,13 @@
-const { ApolloError } = require('apollo-server-express')
-const jwt = require('jsonwebtoken')
-
-async function verifyToken (token) {
-  return new Promise((resolve, reject) => {
-    jwt.verify(token, process.env.SECRET, null, (err, claims) => {
-      if (err) {
-        reject(err)
-        return
-      }
-
-      resolve(claims)
-    })
-  })
-}
+const { ApolloError, AuthenticationError } = require('apollo-server-express')
+const models = require('../models')
+const verifyToken = require('../utils/verify-token')
 
 module.exports = async ({ req }) => {
+  const ctx = {
+    app: req.app,
+    user: null
+  }
+
   const authorization = req.headers.authorization || ''
 
   if (!authorization) {
@@ -43,5 +36,13 @@ module.exports = async ({ req }) => {
     throw new ApolloError('Access token is invalid')
   }
 
-  return { user: claims }
+  const { User } = models
+
+  const user = await User.findByPk(claims.userId)
+
+  if (user !== null) {
+    return { ...ctx, user }
+  }
+
+  throw new AuthenticationError('Invalid token')
 }

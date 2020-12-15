@@ -1,22 +1,12 @@
 const bcrypt = require('bcrypt')
+const { v4: uuidv4 } = require('uuid')
 const jwt = require('jsonwebtoken')
 const { UserInputError, ApolloError } = require('apollo-server-express')
 const sendgrid = require('@sendgrid/mail')
 sendgrid.setApiKey(process.env.SENDGRID_API_KEY)
 const models = require('../../models')
-
-async function checkPassword (
-  password,
-  hash,
-  errorMessage = 'User not found',
-  errorMetadata = {}
-) {
-  const isMatch = await bcrypt.compare(password, hash)
-
-  if (!isMatch) {
-    throw new UserInputError(errorMessage, { ...errorMetadata })
-  }
-}
+const verifyToken = require('../../utils/verify-token')
+const checkPassword = require('../../utils/check-password')
 
 async function createToken (payload, refresh = false) {
   return jwt.sign(payload,
@@ -83,11 +73,20 @@ module.exports.resolvers = {
           createToken({ userId: user.id }, true)
         ])
 
+        const { UserSession } = models
+
+        await UserSession.create({
+          id: uuidv4(),
+          refresh_token: refreshToken,
+          user_id: user.id
+        })
+
         return {
           accessToken,
           refreshToken
         }
       } catch (err) {
+        console.log(err)
         throw new ApolloError(err.message)
       }
     },
@@ -122,11 +121,41 @@ module.exports.resolvers = {
 
       return { success: true }
     },
-    refreshToken: (parent, args, ctx, info) => {
-      // TODO: do logic refesh token logic
+    refreshToken: async (parent, args, ctx, info) => {
+      const { refreshToken: refreshTokenInput } = args.input
+
+      const { UserSession } = models
+
+      const storedRefreshToken = await UserSession.findOne({
+        refresh_token: refreshTokenInput,
+        user_id: ctx.user.id
+      })
+
+      if (!storedRefreshToken) {
+        throw new UserInputError('Refresh token not found.')
+      }
+
+      const {
+        refresh_token: refreshToken,
+        user_id: userId
+      } = storedRefreshToken
+
+      try {
+        await verifyToken(refreshToken)
+      } catch (err) {
+        if (err.name === 'TokenExpiredError') {
+          throw new ApolloError('Refresh token expired')
+        }
+
+        throw new ApolloError('Refresh token is invalid')
+      }
+
+      const newAccessToken = await createToken({ userId })
+
+      return { accessToken: newAccessToken }
     },
     changePassword: async (parent, args, ctx, info) => {
-      const { userId } = ctx.user
+      const { id: userId } = ctx.user
 
       const { oldPassword, newPassword } = args.input
 

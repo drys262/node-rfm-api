@@ -10,11 +10,11 @@ class UserSession extends Sequelize.Model {
         primaryKey: true,
         type: Sequelize.UUID
       },
-      refreshToken: {
+      refresh_token: {
         allowNull: false,
         type: Sequelize.UUID
       },
-      userId: {
+      user_id: {
         allowNull: false,
         type: Sequelize.UUID,
         references: {
@@ -23,7 +23,7 @@ class UserSession extends Sequelize.Model {
         }
       }
     }, {
-      modelName: 'user_sessions',
+      modelName: 'UserSession',
       paranoid: true,
       sequelize: sequelize
     })

@@ -23,7 +23,7 @@ class User extends Sequelize.Model {
         type: Sequelize.STRING(60)
       }
     }, {
-      modelName: 'user',
+      modelName: 'User',
       paranoid: true,
       sequelize: sequelize
     })

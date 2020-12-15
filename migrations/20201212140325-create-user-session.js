@@ -6,11 +6,11 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.UUID
       },
-      refreshToken: {
+      refresh_token: {
         allowNull: false,
         type: Sequelize.STRING
       },
-      userId: {
+      user_id: {
         allowNull: false,
         type: Sequelize.UUID,
         references: {
