@@ -1,10 +1,20 @@
 const { ApolloError } = require('apollo-server-express')
+const jwt = require('jsonwebtoken')
 
 async function verifyToken (token) {
-  // verify token here
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, process.env.SECRET, null, (err, claims) => {
+      if (err) {
+        reject(err)
+        return
+      }
+
+      resolve(claims)
+    })
+  })
 }
 
-module.exports = ({ req }) => {
+module.exports = async ({ req }) => {
   const authorization = req.headers.authorization || ''
 
   if (!authorization) {
@@ -19,7 +29,19 @@ module.exports = ({ req }) => {
     )
   }
 
-  const user = verifyToken(token)
+  let claims
 
-  return { user }
+  try {
+    claims = await verifyToken(token)
+  } catch (err) {
+    console.log(err)
+
+    if (err.name === 'TokenExpiredError') {
+      throw new ApolloError('Access token expired')
+    }
+
+    throw new ApolloError('Access token is invalid')
+  }
+
+  return { user: claims }
 }

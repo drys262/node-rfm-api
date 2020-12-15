@@ -5,11 +5,16 @@ const sendgrid = require('@sendgrid/mail')
 sendgrid.setApiKey(process.env.SENDGRID_API_KEY)
 const models = require('../../models')
 
-async function checkPassword (password, hash, email) {
+async function checkPassword (
+  password,
+  hash,
+  errorMessage = 'User not found',
+  errorMetadata = {}
+) {
   const isMatch = await bcrypt.compare(password, hash)
 
   if (!isMatch) {
-    throw new UserInputError('User not found', { email })
+    throw new UserInputError(errorMessage, { ...errorMetadata })
   }
 }
 
@@ -65,7 +70,12 @@ module.exports.resolvers = {
 
       const user = await getUserByEmail(email)
 
-      await checkPassword(password, user.password, email)
+      await checkPassword(
+        password,
+        user.password,
+        'User not found',
+        { email }
+      )
 
       try {
         const [accessToken, refreshToken] = await Promise.all([
@@ -114,6 +124,25 @@ module.exports.resolvers = {
     },
     refreshToken: (parent, args, ctx, info) => {
       // TODO: do logic refesh token logic
+    },
+    changePassword: async (parent, args, ctx, info) => {
+      const { userId } = ctx.user
+
+      const { oldPassword, newPassword } = args.input
+
+      const { User } = models
+
+      const user = await User.findByPk(userId)
+
+      if (!user) {
+        throw new UserInputError('User not found', { id: userId })
+      }
+
+      await checkPassword(oldPassword, user.password, 'Password mismatch')
+
+      await user.update({ password: await bcrypt.hash(newPassword, 10) })
+
+      return { success: true }
     }
   }
 }
