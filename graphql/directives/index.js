@@ -1,11 +1,11 @@
-const GuestDirective = require('./guest')
-const UserDirective = require('./user')
-const ManagerDirective = require('./manager')
 const AuthDirective = require('./manager')
+const GuestDirective = require('./guest')
+const ManagerDirective = require('./manager')
+const UserDirective = require('./user')
 
 module.exports = {
+  auth: AuthDirective,
   guest: GuestDirective,
-  user: UserDirective,
   manager: ManagerDirective,
-  auth: AuthDirective
+  user: UserDirective
 }

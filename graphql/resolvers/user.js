@@ -142,17 +142,17 @@ module.exports.resolvers = {
       return { accessToken: newAccessToken }
     },
     changePassword: async (parent, args, ctx, info) => {
-      const user = ctx.user || ctx.manager
+      const record = ctx.user || ctx.manager
 
       const { oldPassword, newPassword } = args.input
 
-      const isMatch = await bcrypt.compare(oldPassword, user.password)
+      const isMatch = await bcrypt.compare(oldPassword, record.password)
 
       if (!isMatch) {
         throw new UserInputError('Password mismatch')
       }
 
-      await user.update({ password: await bcrypt.hash(newPassword, 10) })
+      await record.update({ password: await bcrypt.hash(newPassword, 10) })
 
       return { success: true }
     }
