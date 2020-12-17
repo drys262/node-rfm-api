@@ -1,4 +1,6 @@
+directive @auth on FIELD | FIELD_DEFINITION
 directive @guest on FIELD | FIELD_DEFINITION
+directive @manager on FIELD | FIELD_DEFINITION
 directive @user on FIELD | FIELD_DEFINITION
 
 type Mutation

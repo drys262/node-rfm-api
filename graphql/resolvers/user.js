@@ -142,15 +142,9 @@ module.exports.resolvers = {
       return { accessToken: newAccessToken }
     },
     changePassword: async (parent, args, ctx, info) => {
-      const { id: userId } = ctx.user
+      const user = ctx.user || ctx.manager
 
       const { oldPassword, newPassword } = args.input
-
-      const user = await User.findByPk(userId)
-
-      if (!user) {
-        throw new UserInputError('User not found', { id: userId })
-      }
 
       const isMatch = await bcrypt.compare(oldPassword, user.password)
 

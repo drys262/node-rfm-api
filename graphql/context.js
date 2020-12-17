@@ -31,6 +31,7 @@ module.exports = async ({ req }) => {
       if (record !== null) {
         return {
           ...ctx,
+          role: role,
           [role === 'ADMIN' ? 'user' : 'manager']: record
         }
       }
