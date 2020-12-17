@@ -1,12 +1,12 @@
 const bcrypt = require('bcrypt')
-const { v4: uuidv4 } = require('uuid')
 const jwt = require('jsonwebtoken')
-const { UserInputError, ApolloError } = require('apollo-server-express')
 const sendgrid = require('@sendgrid/mail')
+const { v4: uuidv4 } = require('uuid')
+const { UserInputError, ApolloError } = require('apollo-server-express')
 sendgrid.setApiKey(process.env.SENDGRID_API_KEY)
-const models = require('../../models')
-const verifyToken = require('../../utils/verify-token')
+
 const checkPassword = require('../../utils/check-password')
+const { User, UserSession } = require('../../models')
 
 async function createToken (payload, refresh = false) {
   return jwt.sign(payload,
@@ -15,13 +15,24 @@ async function createToken (payload, refresh = false) {
   )
 }
 
+async function verifyToken (token) {
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, process.env.SECRET, null, (err, claims) => {
+      if (err) {
+        reject(err)
+        return
+      }
+
+      resolve(claims)
+    })
+  })
+}
+
 async function getUserByEmail (
   email,
   ignoreError = false,
   errorMessage = 'User not found'
 ) {
-  const { User } = models
-
   const user = await User.findOneByEmail(email)
 
   if (!user && !ignoreError) {
@@ -31,25 +42,14 @@ async function getUserByEmail (
   return user
 }
 
-async function sendEmail (params) {
-  const message = {
-    from: process.env.SENDGRID_EMAIL,
-    ...params
-  }
-
-  await sendgrid.send(message)
-}
-
 function generatePassword (length) {
+  const chs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   let result = ''
-  const characters =
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  const charactersLength = characters.length
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(
-      Math.floor(Math.random() * charactersLength)
-    )
+
+  for (let i = chs.length - 1; i--;) {
+    result += chs.charAt(Math.floor(Math.random() * chs.length))
   }
+
   return result
 }
 
@@ -57,7 +57,6 @@ module.exports.resolvers = {
   Mutation: {
     signIn: async (parent, args, ctx, info) => {
       const { email, password } = args.input
-
       const user = await getUserByEmail(email)
 
       await checkPassword(
@@ -67,27 +66,20 @@ module.exports.resolvers = {
         { email }
       )
 
-      try {
-        const [accessToken, refreshToken] = await Promise.all([
-          createToken({ userId: user.id }),
-          createToken({ userId: user.id }, true)
-        ])
+      const [accessToken, refreshToken] = await Promise.all([
+        createToken({ userId: user.id }),
+        createToken({ userId: user.id }, true)
+      ])
 
-        const { UserSession } = models
+      await UserSession.create({
+        id: uuidv4(),
+        refresh_token: refreshToken,
+        user_id: user.id
+      })
 
-        await UserSession.create({
-          id: uuidv4(),
-          refresh_token: refreshToken,
-          user_id: user.id
-        })
-
-        return {
-          accessToken,
-          refreshToken
-        }
-      } catch (err) {
-        console.log(err)
-        throw new ApolloError(err.message)
+      return {
+        accessToken,
+        refreshToken
       }
     },
     forgotPassword: async (parent, args, ctx, info) => {
@@ -106,11 +98,14 @@ module.exports.resolvers = {
       const newPassword = generatePassword(16)
 
       try {
-        await sendEmail({
+        const message = {
+          from: process.env.SENDGRID_EMAIL,
           to: email,
           subject: 'Your new RFM Password',
           text: `Your new password: ${newPassword}`
-        })
+        }
+
+        await sendgrid.send(message)
       } catch (err) {
         throw new ApolloError(
           'Our mail client crashed please contact system administrator'
@@ -123,8 +118,6 @@ module.exports.resolvers = {
     },
     refreshToken: async (parent, args, ctx, info) => {
       const { refreshToken: refreshTokenInput } = args.input
-
-      const { UserSession } = models
 
       const storedRefreshToken = await UserSession.findOne({
         refresh_token: refreshTokenInput,
@@ -158,8 +151,6 @@ module.exports.resolvers = {
       const { id: userId } = ctx.user
 
       const { oldPassword, newPassword } = args.input
-
-      const { User } = models
 
       const user = await User.findByPk(userId)
 

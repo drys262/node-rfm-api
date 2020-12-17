@@ -1,29 +1,23 @@
 const Sequelize = require('sequelize')
 
-const User = require('./index').user
-
 class UserSession extends Sequelize.Model {
   static init (sequelize) {
     return super.init({
       id: {
         allowNull: false,
         primaryKey: true,
-        type: Sequelize.UUID
+        type: sequelize.UUIDV4
       },
-      refresh_token: {
+      refreshToken: {
         allowNull: false,
-        type: Sequelize.UUID
+        type: sequelize.STRING
       },
       user_id: {
         allowNull: false,
-        type: Sequelize.UUID,
-        references: {
-          model: User,
-          key: 'id'
-        }
+        type: sequelize.UUIDV4
       }
     }, {
-      modelName: 'UserSession',
+      modelName: 'userSession',
       paranoid: true,
       sequelize: sequelize
     })

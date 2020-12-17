@@ -1,25 +1,14 @@
-
-input SignInInput {
-  email: String!
-  password: String! 
-}
-
-input ForgotPasswordInput {
-  email: String!
-}
-
-input RefreshTokenInput {
-  refreshToken: String!
-}
-
 input ChangePasswordInput {
   oldPassword: String!
   newPassword: String!
 }
 
-type SignInPayload {
-  accessToken: String!
-  refreshToken: String!
+type ChangePasswordPayload {
+  success: Boolean!
+}
+
+input ForgotPasswordInput {
+  email: String!
 }
 
 type ForgotPasswordPayload {
@@ -30,11 +19,21 @@ type RefreshTokenPayload {
   accessToken: String!
 }
 
-type ChangePasswordPayload {
-  success: Boolean!
+input RefreshTokenInput {
+  refreshToken: String!
 }
 
-type Mutation {
+input SignInInput {
+  email: String!
+  password: String! 
+}
+
+type SignInPayload {
+  accessToken: String!
+  refreshToken: String!
+}
+
+extend type Mutation {
   changePassword(input: ChangePasswordInput!): ChangePasswordPayload! @user
   forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload! @guest
   refreshToken(input: RefreshTokenInput!): RefreshTokenPayload! @user

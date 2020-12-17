@@ -6,10 +6,6 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.UUID
       },
-      refresh_token: {
-        allowNull: false,
-        type: Sequelize.STRING
-      },
       user_id: {
         allowNull: false,
         type: Sequelize.UUID,
@@ -17,6 +13,10 @@ module.exports = {
           model: 'users',
           key: 'id'
         }
+      },
+      refresh_token: {
+        allowNull: false,
+        type: Sequelize.STRING
       },
       created_at: {
         allowNull: false,

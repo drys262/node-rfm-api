@@ -1,48 +1,32 @@
-const { ApolloError, AuthenticationError } = require('apollo-server-express')
-const models = require('../models')
-const verifyToken = require('../utils/verify-token')
+const { AuthenticationError } = require('apollo-server-express')
+const jwt = require('jsonwebtoken')
+const validator = require('validator')
+
+const { User } = require('../models')
 
 module.exports = async ({ req }) => {
   const ctx = {
-    app: req.app,
     user: null
   }
 
-  const authorization = req.headers.authorization || ''
+  const { authorization = '' } = req.headers
 
-  if (!authorization) {
-    return { user: null }
+  if (authorization === '') {
+    return ctx
   }
 
-  const [type, token] = authorization.split(' ')
+  const token = authorization.replace('Bearer ', '')
 
-  if (type.toLowerCase() !== 'bearer') {
-    throw new ApolloError(
-      `\`${type}\` authorization type is not supported.`
-    )
-  }
+  if (validator.isJWT(token)) {
+    try {
+      const { userId } = await jwt.verify(token, process.env.SECRET)
+      const user = await User.findByPk(userId)
 
-  let claims
-
-  try {
-    claims = await verifyToken(token)
-  } catch (err) {
-    console.log(err)
-
-    if (err.name === 'TokenExpiredError') {
-      throw new ApolloError('Access token expired')
+      if (user !== null) {
+        return { ...ctx, user }
+      }
+    } catch {
     }
-
-    throw new ApolloError('Access token is invalid')
   }
-
-  const { User } = models
-
-  const user = await User.findByPk(claims.userId)
-
-  if (user !== null) {
-    return { ...ctx, user }
-  }
-
   throw new AuthenticationError('Invalid token')
 }
