@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize')
 const validator = require('validator')
 
-class User extends Sequelize.Model {
+class Manager extends Sequelize.Model {
   static init (sequelize) {
     return super.init({
       id: {
@@ -10,11 +10,15 @@ class User extends Sequelize.Model {
         primaryKey: true,
         type: Sequelize.UUIDV4
       },
-      email: {
+      userId: {
+        allowNull: false,
+        type: Sequelize.UUIDV4
+      },
+      name: {
         allowNull: false,
         type: Sequelize.STRING
       },
-      name: {
+      email: {
         allowNull: false,
         type: Sequelize.STRING
       },
@@ -23,7 +27,7 @@ class User extends Sequelize.Model {
         type: Sequelize.STRING(60)
       }
     }, {
-      modelName: 'user',
+      modelName: 'manager',
       paranoid: true,
       sequelize: sequelize
     })
@@ -47,9 +51,8 @@ class User extends Sequelize.Model {
   }
 
   static associate (models) {
-    User.hasMany(models.UserSession)
-    User.hasMany(models.Manager)
+    Manager.belongsTo(models.User)
   }
 }
 
-module.exports = User
+module.exports = Manager

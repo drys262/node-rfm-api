@@ -3,10 +3,14 @@ module.exports = {
     const transaction = await queryInterface.sequelize.transaction()
 
     try {
-      await queryInterface.createTable('users', {
+      await queryInterface.createTable('managers', {
         id: {
           allowNull: false,
           primaryKey: true,
+          type: Sequelize.UUID
+        },
+        user_id: {
+          allowNull: false,
           type: Sequelize.UUID
         },
         name: {
@@ -35,11 +39,14 @@ module.exports = {
         }
       })
 
-      await queryInterface.addIndex('users', ['email', 'deleted_at'], {
-        name: 'users_email_deleted_at_ukey',
-        transaction: transaction,
-        unique: true
-      })
+      await queryInterface.addIndex('managers',
+        ['user_id', 'email', 'deleted_at'],
+        {
+          name: 'managers_user_id_email_deleted_at_ukey',
+          transaction: transaction,
+          unique: true
+        }
+      )
 
       await transaction.commit()
     } catch (err) {
@@ -48,6 +55,6 @@ module.exports = {
     }
   },
   down: (queryInterface) => {
-    return queryInterface.dropTable('users')
+    return queryInterface.dropTable('managers')
   }
 }

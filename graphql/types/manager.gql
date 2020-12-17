@@ -1,0 +1,23 @@
+input CreateManagerInput {
+  name: String!
+  email: String!
+  password: String!
+}
+
+type Manager {
+  id: ID!
+  userId: ID!
+  name: String!
+  email: String!
+}
+
+input UpdateManagerInput {
+  email: String
+  name: String
+}
+
+extend type Mutation {
+  createManager(input: CreateManagerInput!): Manager! @user
+  deleteManager(id: ID!): Manager! @user
+  updateManager(id: ID!, input: UpdateManagerInput!): Manager! @user
+}
