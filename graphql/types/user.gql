@@ -34,7 +34,7 @@ type SignInPayload {
 }
 
 extend type Mutation {
-  changePassword(input: ChangePasswordInput!): ChangePasswordPayload! @user
+  changePassword(input: ChangePasswordInput!): ChangePasswordPayload! @auth
   forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload! @guest
   refreshToken(input: RefreshTokenInput!): RefreshTokenPayload! @user
   signIn(input: SignInInput!): SignInPayload! @guest
