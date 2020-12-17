@@ -1,11 +1,9 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const sendgrid = require('@sendgrid/mail')
-const { v4: uuidv4 } = require('uuid')
 const { UserInputError, ApolloError } = require('apollo-server-express')
 sendgrid.setApiKey(process.env.SENDGRID_API_KEY)
 
-const checkPassword = require('../../utils/check-password')
 const { User, UserSession } = require('../../models')
 
 async function createToken (payload, refresh = false) {
@@ -28,20 +26,6 @@ async function verifyToken (token) {
   })
 }
 
-async function getUserByEmail (
-  email,
-  ignoreError = false,
-  errorMessage = 'User not found'
-) {
-  const user = await User.findOneByEmail(email)
-
-  if (!user && !ignoreError) {
-    throw new UserInputError(errorMessage, { email })
-  }
-
-  return user
-}
-
 function generatePassword (length) {
   const chs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   let result = ''
@@ -57,14 +41,18 @@ module.exports.resolvers = {
   Mutation: {
     signIn: async (parent, args, ctx, info) => {
       const { email, password } = args.input
-      const user = await getUserByEmail(email)
 
-      await checkPassword(
-        password,
-        user.password,
-        'User not found',
-        { email }
-      )
+      const user = await User.findOneByEmail(email)
+
+      if (!user) {
+        throw new UserInputError('User not found', { email })
+      }
+
+      const isMatch = await bcrypt.compare(password, user.password)
+
+      if (!isMatch) {
+        throw new UserInputError('User not found', { email })
+      }
 
       const [accessToken, refreshToken] = await Promise.all([
         createToken({ userId: user.id }),
@@ -72,9 +60,8 @@ module.exports.resolvers = {
       ])
 
       await UserSession.create({
-        id: uuidv4(),
-        refresh_token: refreshToken,
-        user_id: user.id
+        refreshToken: refreshToken,
+        userId: user.id
       })
 
       return {
@@ -85,11 +72,11 @@ module.exports.resolvers = {
     forgotPassword: async (parent, args, ctx, info) => {
       const { email } = args.input
 
-      const user = await getUserByEmail(
-        email,
-        true,
-        'Email is not found on our system.'
-      )
+      const user = await User.findOneByEmail(email)
+
+      if (!user) {
+        throw new UserInputError('Email is not found on our system', { email })
+      }
 
       if (!user) {
         return { success: true }
@@ -128,10 +115,9 @@ module.exports.resolvers = {
         throw new UserInputError('Refresh token not found.')
       }
 
-      const {
-        refresh_token: refreshToken,
-        user_id: userId
-      } = storedRefreshToken
+      console.log('storedRefreshToken', storedRefreshToken)
+
+      const { refreshToken, userId } = storedRefreshToken
 
       try {
         await verifyToken(refreshToken)
@@ -158,7 +144,11 @@ module.exports.resolvers = {
         throw new UserInputError('User not found', { id: userId })
       }
 
-      await checkPassword(oldPassword, user.password, 'Password mismatch')
+      const isMatch = await bcrypt.compare(oldPassword, user.password)
+
+      if (!isMatch) {
+        throw new UserInputError('Password mismatch')
+      }
 
       await user.update({ password: await bcrypt.hash(newPassword, 10) })
 

@@ -5,22 +5,27 @@ class UserSession extends Sequelize.Model {
     return super.init({
       id: {
         allowNull: false,
+        defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
-        type: sequelize.UUIDV4
+        type: Sequelize.UUIDV4
+      },
+      userId: {
+        allowNull: false,
+        type: Sequelize.UUIDV4
       },
       refreshToken: {
         allowNull: false,
-        type: sequelize.STRING
-      },
-      user_id: {
-        allowNull: false,
-        type: sequelize.UUIDV4
+        type: Sequelize.STRING
       }
     }, {
       modelName: 'userSession',
       paranoid: true,
       sequelize: sequelize
     })
+  }
+
+  static associate (models) {
+    UserSession.belongsTo(models.User)
   }
 }
 

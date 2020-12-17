@@ -8,7 +8,7 @@ class User extends Sequelize.Model {
         allowNull: false,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
-        type: Sequelize.UUID
+        type: Sequelize.UUIDV4
       },
       email: {
         allowNull: false,
@@ -44,6 +44,10 @@ class User extends Sequelize.Model {
       require_display_name: false,
       require_tld: true
     })
+  }
+
+  static associate (models) {
+    User.hasMany(models.UserSession)
   }
 }
 

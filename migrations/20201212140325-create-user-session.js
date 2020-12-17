@@ -4,15 +4,11 @@ module.exports = {
       id: {
         allowNull: false,
         primaryKey: true,
-        type: Sequelize.UUID
+        type: Sequelize.UUIDV4
       },
       user_id: {
         allowNull: false,
-        type: Sequelize.UUID,
-        references: {
-          model: 'users',
-          key: 'id'
-        }
+        type: Sequelize.UUIDV4
       },
       refresh_token: {
         allowNull: false,
