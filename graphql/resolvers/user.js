@@ -6,13 +6,6 @@ sendgrid.setApiKey(process.env.SENDGRID_API_KEY)
 
 const { User, UserSession } = require('../../models')
 
-async function createToken (payload, refresh = false) {
-  return jwt.sign(payload,
-    process.env.SECRET,
-    { algorithm: 'HS256', expiresIn: refresh ? '10y' : '10m' }
-  )
-}
-
 async function verifyToken (token) {
   return new Promise((resolve, reject) => {
     jwt.verify(token, process.env.SECRET, null, (err, claims) => {
@@ -55,8 +48,14 @@ module.exports.resolvers = {
       }
 
       const [accessToken, refreshToken] = await Promise.all([
-        createToken({ userId: user.id }),
-        createToken({ userId: user.id }, true)
+        jwt.sign({ userId: user.id },
+          process.env.SECRET,
+          { algorithm: 'HS256', expiresIn: '1h' }
+        ),
+        jwt.sign({ userId: user.id },
+          process.env.SECRET,
+          { algorithm: 'HS256', expiresIn: '10y' }
+        )
       ])
 
       await UserSession.create({
@@ -129,7 +128,10 @@ module.exports.resolvers = {
         throw new ApolloError('Refresh token is invalid')
       }
 
-      const newAccessToken = await createToken({ userId })
+      const newAccessToken = await jwt.sign({ userId },
+        process.env.SECRET,
+        { algorithm: 'HS256', expiresIn: '1h' }
+      )
 
       return { accessToken: newAccessToken }
     },
