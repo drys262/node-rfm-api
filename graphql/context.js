@@ -2,7 +2,12 @@ const { AuthenticationError } = require('apollo-server-express')
 const jwt = require('jsonwebtoken')
 const validator = require('validator')
 
-const { User } = require('../models')
+const { Manager, User } = require('../models')
+
+const models = {
+  ADMIN: User,
+  MANAGER: Manager
+}
 
 module.exports = async ({ req }) => {
   const ctx = {
@@ -19,11 +24,15 @@ module.exports = async ({ req }) => {
 
   if (validator.isJWT(token)) {
     try {
-      const { userId } = await jwt.verify(token, process.env.SECRET)
-      const user = await User.findByPk(userId)
+      const { userId, role } = await jwt.verify(token, process.env.SECRET)
 
-      if (user !== null) {
-        return { ...ctx, user }
+      const record = await models[role].findByPk(userId)
+
+      if (record !== null) {
+        return {
+          ...ctx,
+          [role === 'ADMIN' ? 'user' : 'manager']: record
+        }
       }
     } catch {
     }

@@ -4,7 +4,7 @@ const sendgrid = require('@sendgrid/mail')
 const { UserInputError, ApolloError } = require('apollo-server-express')
 sendgrid.setApiKey(process.env.SENDGRID_API_KEY)
 
-const { User, UserSession } = require('../../models')
+const { Manager, User, UserSession } = require('../../models')
 
 async function verifyToken (token) {
   return new Promise((resolve, reject) => {
@@ -35,32 +35,38 @@ module.exports.resolvers = {
     signIn: async (parent, args, ctx, info) => {
       const { email, password } = args.input
 
-      const user = await User.findOneByEmail(email)
+      const [user, manager] = await Promise.all([
+        User.findOneByEmail(email),
+        Manager.findOneByEmail(email)
+      ])
 
-      if (!user) {
+      if (!user && !manager) {
         throw new UserInputError('User not found', { email })
       }
 
-      const isMatch = await bcrypt.compare(password, user.password)
+      const record = user || manager
+
+      const isMatch = await bcrypt.compare(password, record.password)
 
       if (!isMatch) {
         throw new UserInputError('User not found', { email })
       }
 
+      const role = user ? 'ADMIN' : 'MANAGER'
+      const payload = { userId: record.id, role: role }
+
       const [accessToken, refreshToken] = await Promise.all([
-        jwt.sign({ userId: user.id },
-          process.env.SECRET,
+        jwt.sign(payload, process.env.SECRET,
           { algorithm: 'HS256', expiresIn: '1h' }
         ),
-        jwt.sign({ userId: user.id },
-          process.env.SECRET,
+        jwt.sign(payload, process.env.SECRET,
           { algorithm: 'HS256', expiresIn: '10y' }
         )
       ])
 
       await UserSession.create({
         refreshToken: refreshToken,
-        userId: user.id
+        userId: record.id
       })
 
       return {
