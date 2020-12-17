@@ -8,8 +8,6 @@ module.exports.resolvers = {
     createManager: async (parent, args, ctx, info) => {
       const { name, email, password } = args.input
 
-      console.log('ctx user id here', ctx.user.id)
-
       const manager = await Manager.create({
         userId: ctx.user.id,
         name: name,
@@ -17,7 +15,7 @@ module.exports.resolvers = {
         password: await bcrypt.hash(password, 10)
       })
 
-      return manager.get({ plain: true })
+      return manager
     },
     deleteManager: async (parent, args, ctx, info) => {
       const manager = await Manager.findOne({
@@ -33,7 +31,7 @@ module.exports.resolvers = {
 
       await manager.destroy()
 
-      return manager.get({ plain: true })
+      return manager
     },
     updateManager: async (parent, args, ctx, info) => {
       const { id, input } = args
@@ -46,7 +44,7 @@ module.exports.resolvers = {
 
       const updatedManager = await manager.update(input)
 
-      return updatedManager.get({ plain: true })
+      return updatedManager
     }
   }
 }
