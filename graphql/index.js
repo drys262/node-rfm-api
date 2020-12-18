@@ -3,6 +3,7 @@ const path = require('path')
 const { gql, makeExecutableSchema } = require('apollo-server-express')
 const { merge } = require('lodash')
 
+const context = require('./context')
 const directives = require('./directives')
 
 const resolvers = fs.readdirSync(path.join(__dirname, 'resolvers'))
@@ -22,6 +23,7 @@ const typeDefs = fs.readdirSync(path.join(__dirname, 'types'))
   })
 
 module.exports = {
+  context: context,
   schema: makeExecutableSchema({
     inheritResolversFromInterfaces: true,
     resolvers: merge(...resolvers),
