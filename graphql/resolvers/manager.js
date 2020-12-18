@@ -6,12 +6,12 @@ const { Manager } = require('../../models')
 module.exports.resolvers = {
   Mutation: {
     createManager: async (parent, args, ctx) => {
-      const { name, email, password } = args.input
+      const { email, name, password } = args.input
 
       const manager = await Manager.create({
         userId: ctx.user.id,
-        name: name,
         email: email,
+        name: name,
         password: await bcrypt.hash(password, 10)
       })
 
