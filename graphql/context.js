@@ -11,7 +11,8 @@ const models = {
 
 module.exports = async ({ req }) => {
   const ctx = {
-    user: null
+    user: null,
+    mail: req.app.get('mail')
   }
 
   const { authorization = '' } = req.headers
@@ -38,5 +39,6 @@ module.exports = async ({ req }) => {
     } catch {
     }
   }
+
   throw new AuthenticationError('Invalid token')
 }
