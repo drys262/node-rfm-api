@@ -2,13 +2,34 @@ const Sequelize = require('sequelize')
 const validator = require('validator')
 
 class User extends Sequelize.Model {
+  static associate (models) {
+    User.hasMany(models.UserSession)
+  }
+
+  static findOneByEmail (email) {
+    return this.findOne({
+      where: { email }
+    })
+  }
+
+  static generatePassword (length) {
+    const chs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    let result = ''
+
+    for (let i = length - 1; i--;) {
+      result += chs.charAt(Math.floor(Math.random() * chs.length))
+    }
+
+    return result
+  }
+
   static init (sequelize) {
     return super.init({
       id: {
         allowNull: false,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
-        type: Sequelize.UUIDV4
+        type: Sequelize.UUID
       },
       email: {
         allowNull: false,
@@ -29,12 +50,6 @@ class User extends Sequelize.Model {
     })
   }
 
-  static findOneByEmail (email) {
-    return this.findOne({
-      where: { email }
-    })
-  }
-
   static isEmail (email) {
     return validator.isEmail(email, {
       allow_display_name: false,
@@ -46,8 +61,8 @@ class User extends Sequelize.Model {
     })
   }
 
-  static associate (models) {
-    User.hasMany(models.UserSession)
+  static isPassword (password) {
+    return validator.isLength(password, { min: 6 })
   }
 }
 

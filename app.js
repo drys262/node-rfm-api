@@ -3,6 +3,7 @@ require('dotenv').config()
 const { ApolloServer } = require('apollo-server-express')
 const express = require('express')
 const helmet = require('helmet')
+const SendGrid = require('@sendgrid/mail')
 
 const ApolloServerConfig = require('./graphql')
 
@@ -15,6 +16,10 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 app.use(express.static('public'))
+app.configure(() => {
+  SendGrid.setApiKey(process.env.SENDGRID_API_KEY)
+  app.set('mail', SendGrid)
+})
 
 server.applyMiddleware({
   app: app,

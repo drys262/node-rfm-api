@@ -1,29 +1,14 @@
+const { UserInputError, ApolloError } = require('apollo-server-express')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const sendgrid = require('@sendgrid/mail')
-const { UserInputError, ApolloError } = require('apollo-server-express')
-sendgrid.setApiKey(process.env.SENDGRID_API_KEY)
 
 const { User, UserSession } = require('../../models')
-
-async function verifyToken (token) {
-  return new Promise((resolve, reject) => {
-    jwt.verify(token, process.env.SECRET, null, (err, claims) => {
-      if (err) {
-        reject(err)
-        return
-      }
-
-      resolve(claims)
-    })
-  })
-}
 
 function generatePassword (length) {
   const chs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   let result = ''
 
-  for (let i = chs.length - 1; i--;) {
+  for (let i = length - 1; i--;) {
     result += chs.charAt(Math.floor(Math.random() * chs.length))
   }
 
@@ -32,127 +17,124 @@ function generatePassword (length) {
 
 module.exports.resolvers = {
   Mutation: {
-    signIn: async (parent, args, ctx, info) => {
+    signIn: async (parent, args) => {
       const { email, password } = args.input
+
+      if (!User.isEmail(email)) {
+        throw new UserInputError('Invalid email', {
+          invalidArgs: ['email']
+        })
+      } else if (!User.isPassword(password)) {
+        throw new UserInputError('Invalid password', {
+          invalidArgs: ['password']
+        })
+      }
 
       const user = await User.findOneByEmail(email)
 
-      if (!user) {
-        throw new UserInputError('User not found', { email })
+      if (user === null) {
+        throw new UserInputError('Invalid email or password', {
+          invalidArgs: ['email', 'password']
+        })
       }
 
-      const isMatch = await bcrypt.compare(password, user.password)
+      const passwordsMatch = await bcrypt.compare(password, user.password)
 
-      if (!isMatch) {
-        throw new UserInputError('User not found', { email })
+      if (!passwordsMatch) {
+        throw new UserInputError('Invalid email or password', {
+          invalidArgs: ['email', 'password']
+        })
       }
 
       const [accessToken, refreshToken] = await Promise.all([
-        jwt.sign({ userId: user.id },
-          process.env.SECRET,
-          { algorithm: 'HS256', expiresIn: '1h' }
-        ),
-        jwt.sign({ userId: user.id },
-          process.env.SECRET,
-          { algorithm: 'HS256', expiresIn: '10y' }
-        )
+        jwt.sign({ userId: user.id }, process.env.SECRET, { expiresIn: '1h' }),
+        jwt.sign({ userId: user.id }, process.env.SECRET, { expiresIn: '10y' })
       ])
 
       await UserSession.create({
-        refreshToken: refreshToken,
-        userId: user.id
+        userId: user.id,
+        refreshToken: refreshToken
       })
 
-      return {
-        accessToken,
-        refreshToken
-      }
+      return { accessToken, refreshToken }
     },
-    forgotPassword: async (parent, args, ctx, info) => {
+    forgotPassword: async (parent, args, ctx) => {
       const { email } = args.input
+
+      if (!User.isEmail(email)) {
+        throw new UserInputError('Invalid email', {
+          invalidArgs: ['email']
+        })
+      }
+
+      const { mail } = ctx
 
       const user = await User.findOneByEmail(email)
 
-      if (!user) {
-        throw new UserInputError('Email is not found on our system', { email })
+      if (user === null) {
+        throw new UserInputError('Invalid email', {
+          invalidArgs: ['email']
+        })
       }
 
-      if (!user) {
+      if (user === null) {
         return { success: true }
       }
 
       const newPassword = generatePassword(16)
+      const newPasswordHash = await bcrypt.hash(newPassword, 10)
 
       try {
-        const message = {
+        await mail.send({
           from: process.env.SENDGRID_EMAIL,
           to: email,
           subject: 'Your new RFM Password',
           text: `Your new password: ${newPassword}`
-        }
-
-        await sendgrid.send(message)
+        })
       } catch (err) {
-        throw new ApolloError(
-          'Our mail client crashed please contact system administrator'
-        )
+        throw new ApolloError('We were unable to send you an email')
       }
 
-      await user.update({ password: await bcrypt.hash(newPassword, 10) })
+      await user.update({ password: newPasswordHash })
 
       return { success: true }
     },
-    refreshToken: async (parent, args, ctx, info) => {
-      const { refreshToken: refreshTokenInput } = args.input
+    refreshToken: async (parent, args, ctx) => {
+      const { refreshToken } = args.input
 
-      const storedRefreshToken = await UserSession.findOne({
-        refresh_token: refreshTokenInput,
-        user_id: ctx.user.id
-      })
-
-      if (!storedRefreshToken) {
-        throw new UserInputError('Refresh token not found.')
+      if (!UserSession.isRefreshToken(ctx.user.id, refreshToken)) {
+        throw new UserInputError('Invalid refresh token', {
+          invalidArgs: ['refreshToken']
+        })
       }
 
-      console.log('storedRefreshToken', storedRefreshToken)
-
-      const { refreshToken, userId } = storedRefreshToken
-
-      try {
-        await verifyToken(refreshToken)
-      } catch (err) {
-        if (err.name === 'TokenExpiredError') {
-          throw new ApolloError('Refresh token expired')
-        }
-
-        throw new ApolloError('Refresh token is invalid')
-      }
-
-      const newAccessToken = await jwt.sign({ userId },
+      const newAccessToken = await jwt.sign({ userId: ctx.user.id },
         process.env.SECRET,
-        { algorithm: 'HS256', expiresIn: '1h' }
+        { expiresIn: '1h' }
       )
 
-      return { accessToken: newAccessToken }
+      return {
+        accessToken: newAccessToken
+      }
     },
-    changePassword: async (parent, args, ctx, info) => {
-      const { id: userId } = ctx.user
-
+    changePassword: async (parent, args, ctx) => {
       const { oldPassword, newPassword } = args.input
 
-      const user = await User.findByPk(userId)
-
-      if (!user) {
-        throw new UserInputError('User not found', { id: userId })
+      if (!User.isPassword(oldPassword) || !User.isPassword(newPassword)) {
+        throw new UserInputError('Invalid password', {
+          invalidArgs: ['oldPassword', 'newPassword']
+        })
       }
 
-      const isMatch = await bcrypt.compare(oldPassword, user.password)
+      const passwordsMatch = await bcrypt.compare(oldPassword, ctx.user.password)
 
-      if (!isMatch) {
+      if (!passwordsMatch) {
         throw new UserInputError('Password mismatch')
       }
 
-      await user.update({ password: await bcrypt.hash(newPassword, 10) })
+      const newPasswordHash = await bcrypt.hash(newPassword, 10)
+
+      await ctx.user.update({ password: newPasswordHash })
 
       return { success: true }
     }

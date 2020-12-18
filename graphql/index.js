@@ -4,7 +4,6 @@ const { gql, makeExecutableSchema } = require('apollo-server-express')
 const { merge } = require('lodash')
 
 const context = require('./context')
-
 const directives = require('./directives')
 
 const resolvers = fs.readdirSync(path.join(__dirname, 'resolvers'))
@@ -30,5 +29,6 @@ module.exports = {
     resolvers: merge(...resolvers),
     schemaDirectives: directives,
     typeDefs: typeDefs
-  })
+  }),
+  uploads: false
 }
