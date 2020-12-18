@@ -11,8 +11,8 @@ const models = {
 
 module.exports = async ({ req }) => {
   const ctx = {
-    user: null,
-    mail: req.app.get('mail')
+    mail: req.app.get('mail'),
+    user: null
   }
 
   const { authorization = '' } = req.headers
@@ -26,7 +26,6 @@ module.exports = async ({ req }) => {
   if (validator.isJWT(token)) {
     try {
       const { userId, role } = await jwt.verify(token, process.env.SECRET)
-
       const record = await models[role].findByPk(userId)
 
       if (record !== null) {

@@ -4,17 +4,6 @@ const jwt = require('jsonwebtoken')
 
 const { Manager, User, UserSession } = require('../../models')
 
-function generatePassword (length) {
-  const chs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  let result = ''
-
-  for (let i = length - 1; i--;) {
-    result += chs.charAt(Math.floor(Math.random() * chs.length))
-  }
-
-  return result
-}
-
 module.exports.resolvers = {
   Mutation: {
     signIn: async (parent, args) => {
@@ -35,14 +24,13 @@ module.exports.resolvers = {
         Manager.findOneByEmail(email)
       ])
 
-      if (!user && !manager) {
+      if (user === null && manager === null) {
         throw new UserInputError('Invalid email or password', {
           invalidArgs: ['email', 'password']
         })
       }
 
       const record = user || manager
-
       const passwordsMatch = await bcrypt.compare(password, record.password)
 
       if (!passwordsMatch) {
@@ -60,7 +48,7 @@ module.exports.resolvers = {
       ])
 
       await UserSession.create({
-        userId: user.id,
+        [role === 'ADMIN' ? 'userId' : 'managerId']: record.id,
         refreshToken: refreshToken
       })
 
@@ -75,31 +63,23 @@ module.exports.resolvers = {
         })
       }
 
-      const { mail } = ctx
-
       const user = await User.findOneByEmail(email)
-
-      if (user === null) {
-        throw new UserInputError('Invalid email', {
-          invalidArgs: ['email']
-        })
-      }
 
       if (user === null) {
         return { success: true }
       }
 
-      const newPassword = generatePassword(16)
+      const newPassword = User.generatePassword(16)
       const newPasswordHash = await bcrypt.hash(newPassword, 10)
 
       try {
-        await mail.send({
+        await ctx.mail.send({
           from: process.env.SENDGRID_EMAIL,
           to: email,
-          subject: 'Your new RFM Password',
+          subject: 'New Password',
           text: `Your new password: ${newPassword}`
         })
-      } catch (err) {
+      } catch {
         throw new ApolloError('We were unable to send you an email')
       }
 
@@ -107,43 +87,70 @@ module.exports.resolvers = {
 
       return { success: true }
     },
-    refreshToken: async (parent, args, ctx) => {
+    refreshToken: async (parent, args) => {
       const { refreshToken } = args.input
 
-      if (!UserSession.isRefreshToken(ctx.user.id, refreshToken)) {
+      if (!UserSession.isToken(refreshToken)) {
         throw new UserInputError('Invalid refresh token', {
           invalidArgs: ['refreshToken']
         })
       }
 
-      const newAccessToken = await jwt.sign({ userId: ctx.user.id },
+      let userId
+
+      try {
+        ({ userId } = await jwt.verify(refreshToken, process.env.SECRET))
+      } catch {
+        throw new UserInputError('Invalid refresh token', {
+          invalidArgs: ['refreshToken']
+        })
+      }
+
+      const userSession = await UserSession.findByUserIdAndRefreshToken(
+        userId,
+        refreshToken
+      )
+
+      if (userSession === null) {
+        throw new UserInputError('Invalid refresh token', {
+          invalidArgs: ['refreshToken']
+        })
+      }
+
+      const newAccessToken = await jwt.sign(
+        { userId },
         process.env.SECRET,
         { expiresIn: '1h' }
       )
 
-      return {
-        accessToken: newAccessToken
-      }
+      return { accessToken: newAccessToken }
     },
     changePassword: async (parent, args, ctx) => {
       const record = ctx.user || ctx.manager
-
       const { oldPassword, newPassword } = args.input
 
-      if (!User.isPassword(oldPassword) || !User.isPassword(newPassword)) {
-        throw new UserInputError('Invalid password', {
-          invalidArgs: ['oldPassword', 'newPassword']
+      if (!User.isPassword(oldPassword)) {
+        throw new UserInputError('Invalid old password', {
+          invalidArgs: ['oldPassword']
+        })
+      } else if (!User.isPassword(newPassword)) {
+        throw new UserInputError('Invalid new password', {
+          invalidArgs: ['newPassword']
         })
       }
 
-      const passwordsMatch = await bcrypt.compare(oldPassword, record.password)
+      const passwordsMatch = await bcrypt.compare(
+        oldPassword,
+        record.password
+      )
 
       if (!passwordsMatch) {
-        throw new UserInputError('Password mismatch')
+        throw new UserInputError('Invalid old password', {
+          invalidArgs: ['oldPassword']
+        })
       }
 
       const newPasswordHash = await bcrypt.hash(newPassword, 10)
-
       await record.update({ password: newPasswordHash })
 
       return { success: true }

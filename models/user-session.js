@@ -1,10 +1,14 @@
-const jwt = require('jsonwebtoken')
 const Sequelize = require('sequelize')
 const validator = require('validator')
 
 class UserSession extends Sequelize.Model {
   static associate (models) {
     UserSession.belongsTo(models.User)
+    UserSession.belongsTo(models.Manager)
+  }
+
+  static findByUserIdAndRefreshToken (userId, refreshToken) {
+    return this.findOne({ userId, refreshToken })
   }
 
   static init (sequelize) {
@@ -26,31 +30,8 @@ class UserSession extends Sequelize.Model {
     })
   }
 
-  static async isRefreshToken (userId, refreshToken) {
-    if (!validator.isJWT(refreshToken)) {
-      return false
-    }
-
-    const userSession = await this.findByUserAndRefreshToken(
-      userId,
-      refreshToken
-    )
-
-    if (userSession === null) {
-      return false
-    }
-
-    try {
-      await jwt.verify(refreshToken, process.env.SECRET)
-    } catch (err) {
-      return false
-    }
-
-    return true
-  }
-
-  static findByUserAndRefreshToken (userId, refreshToken) {
-    return this.findOne({ userId, refreshToken })
+  static isToken (refreshToken) {
+    return validator.isJWT(refreshToken)
   }
 }
 

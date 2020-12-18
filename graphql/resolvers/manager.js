@@ -1,11 +1,11 @@
-const bcrypt = require('bcrypt')
 const { UserInputError } = require('apollo-server-express')
+const bcrypt = require('bcrypt')
 
 const { Manager } = require('../../models')
 
 module.exports.resolvers = {
   Mutation: {
-    createManager: async (parent, args, ctx, info) => {
+    createManager: async (parent, args, ctx) => {
       const { name, email, password } = args.input
 
       const manager = await Manager.create({
@@ -17,7 +17,7 @@ module.exports.resolvers = {
 
       return manager
     },
-    deleteManager: async (parent, args, ctx, info) => {
+    deleteManager: async (parent, args, ctx) => {
       const manager = await Manager.findOne({
         where: {
           id: args.id,
@@ -25,24 +25,26 @@ module.exports.resolvers = {
         }
       })
 
-      if (!manager) {
-        throw new UserInputError('Manager not found', { id: args.id })
+      if (manager === null) {
+        throw new UserInputError('Manager not found', {
+          invalidArgs: ['id']
+        })
       }
 
       await manager.destroy()
 
       return manager
     },
-    updateManager: async (parent, args, ctx, info) => {
-      const { id, input } = args
+    updateManager: async (parent, args) => {
+      const manager = await Manager.findByPk(args.id)
 
-      const manager = await Manager.findByPk(id)
-
-      if (!manager) {
-        throw new UserInputError('Manager not found', { id: args.id })
+      if (manager === null) {
+        throw new UserInputError('Manager not found', {
+          invalidArgs: ['id']
+        })
       }
 
-      const updatedManager = await manager.update(input)
+      const updatedManager = await manager.update(args.input)
 
       return updatedManager
     }

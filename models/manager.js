@@ -2,16 +2,23 @@ const Sequelize = require('sequelize')
 const validator = require('validator')
 
 class Manager extends Sequelize.Model {
+  static associate (models) {
+    Manager.belongsTo(models.User)
+    Manager.hasMany(models.UserSession)
+  }
+
+  static findOneByEmail (email) {
+    return this.findOne({
+      where: { email }
+    })
+  }
+
   static init (sequelize) {
     return super.init({
       id: {
         allowNull: false,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
-        type: Sequelize.UUIDV4
-      },
-      userId: {
-        allowNull: false,
         type: Sequelize.UUIDV4
       },
       name: {
@@ -33,12 +40,6 @@ class Manager extends Sequelize.Model {
     })
   }
 
-  static findOneByEmail (email) {
-    return this.findOne({
-      where: { email }
-    })
-  }
-
   static isEmail (email) {
     return validator.isEmail(email, {
       allow_display_name: false,
@@ -48,10 +49,6 @@ class Manager extends Sequelize.Model {
       require_display_name: false,
       require_tld: true
     })
-  }
-
-  static associate (models) {
-    Manager.belongsTo(models.User)
   }
 }
 

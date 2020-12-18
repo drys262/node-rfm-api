@@ -13,7 +13,7 @@ input RefreshTokenInput {
 
 input SignInInput {
   email: String!
-  password: String! 
+  password: String!
 }
 
 type ChangePasswordPayload {
@@ -36,6 +36,6 @@ type SignInPayload {
 extend type Mutation {
   changePassword(input: ChangePasswordInput!): ChangePasswordPayload! @auth
   forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload! @guest
-  refreshToken(input: RefreshTokenInput!): RefreshTokenPayload! @user
+  refreshToken(input: RefreshTokenInput!): RefreshTokenPayload! @guest
   signIn(input: SignInInput!): SignInPayload! @guest
 }
