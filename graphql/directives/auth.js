@@ -8,7 +8,7 @@ class AuthDirective extends SchemaDirectiveVisitor {
     const { resolve } = field
 
     field.resolve = function (root, args, ctx, info) {
-      if (ctx.user === null && ctx.manager === null) {
+      if (ctx.user === null) {
         throw new AuthenticationError('Unauthenticated')
       }
 

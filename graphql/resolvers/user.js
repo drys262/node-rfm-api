@@ -6,7 +6,7 @@ const { Manager, User, UserSession } = require('../../models')
 
 module.exports.resolvers = {
   Mutation: {
-    signIn: async (parent, args) => {
+    signIn: async (parent, args, ctx) => {
       const { email, password } = args.input
 
       if (!User.isEmail(email)) {
@@ -30,7 +30,7 @@ module.exports.resolvers = {
         })
       }
 
-      const record = user || manager
+      const record = ctx.user
       const passwordsMatch = await bcrypt.compare(password, record.password)
 
       if (!passwordsMatch) {
@@ -39,8 +39,10 @@ module.exports.resolvers = {
         })
       }
 
-      const role = user ? 'ADMIN' : 'MANAGER'
-      const payload = { userId: record.id, role: role }
+      const payload = {
+        role: user ? 'ADMIN' : 'MANAGER',
+        userId: record.id
+      }
 
       const [accessToken, refreshToken] = await Promise.all([
         jwt.sign(payload, process.env.SECRET, { expiresIn: '1h' }),
@@ -48,7 +50,7 @@ module.exports.resolvers = {
       ])
 
       await UserSession.create({
-        [role === 'ADMIN' ? 'userId' : 'managerId']: record.id,
+        [user ? 'userId' : 'managerId']: record.id,
         refreshToken: refreshToken
       })
 
@@ -63,12 +65,16 @@ module.exports.resolvers = {
         })
       }
 
-      const user = await User.findOneByEmail(email)
+      const [user, manager] = await Promise.all([
+        User.findOneByEmail(email),
+        Manager.findOneByEmail(email)
+      ])
 
-      if (user === null) {
+      if (user === null && manager === null) {
         return { success: true }
       }
 
+      const record = user || manager
       const newPassword = User.generatePassword(16)
       const newPasswordHash = await bcrypt.hash(newPassword, 10)
 
@@ -83,7 +89,7 @@ module.exports.resolvers = {
         throw new ApolloError('We were unable to send you an email')
       }
 
-      await user.update({ password: newPasswordHash })
+      await record.update({ password: newPasswordHash })
 
       return { success: true }
     },
@@ -126,7 +132,7 @@ module.exports.resolvers = {
       return { accessToken: newAccessToken }
     },
     changePassword: async (parent, args, ctx) => {
-      const record = ctx.user || ctx.manager
+      const record = ctx.user
       const { oldPassword, newPassword } = args.input
 
       if (!User.isPassword(oldPassword)) {

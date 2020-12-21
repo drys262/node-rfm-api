@@ -1,19 +1,22 @@
 input CreateManagerInput {
-  name: String!
   email: String!
+  name: String!
   password: String!
-}
-
-type Manager {
-  id: ID!
-  userId: ID!
-  name: String!
-  email: String!
 }
 
 input UpdateManagerInput {
   email: String
   name: String
+}
+
+type Manager {
+  createdAt: Date!
+  updatedAt: Date
+  email: String!
+  id: ID!
+  name: String!
+  userId: ID!
+  user: User!
 }
 
 extend type Mutation {

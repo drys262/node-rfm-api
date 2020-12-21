@@ -8,7 +8,7 @@ class Manager extends Sequelize.Model {
   }
 
   static findOneByEmail (email) {
-    return this.findOne({
+    return Manager.findOne({
       where: { email }
     })
   }

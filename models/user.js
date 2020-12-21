@@ -3,12 +3,12 @@ const validator = require('validator')
 
 class User extends Sequelize.Model {
   static associate (models) {
-    User.hasMany(models.UserSession)
     User.hasMany(models.Manager)
+    User.hasMany(models.UserSession)
   }
 
   static findOneByEmail (email) {
-    return this.findOne({
+    return User.findOne({
       where: { email }
     })
   }

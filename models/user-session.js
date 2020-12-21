@@ -3,12 +3,12 @@ const validator = require('validator')
 
 class UserSession extends Sequelize.Model {
   static associate (models) {
-    UserSession.belongsTo(models.User)
     UserSession.belongsTo(models.Manager)
+    UserSession.belongsTo(models.User)
   }
 
   static findByUserIdAndRefreshToken (userId, refreshToken) {
-    return this.findOne({ userId, refreshToken })
+    return UserSession.findOne({ userId, refreshToken })
   }
 
   static init (sequelize) {

@@ -4,11 +4,6 @@ const validator = require('validator')
 
 const { Manager, User } = require('../models')
 
-const models = {
-  ADMIN: User,
-  MANAGER: Manager
-}
-
 module.exports = async ({ req }) => {
   const ctx = {
     mail: req.app.get('mail'),
@@ -26,13 +21,16 @@ module.exports = async ({ req }) => {
   if (validator.isJWT(token)) {
     try {
       const { userId, role } = await jwt.verify(token, process.env.SECRET)
-      const record = await models[role].findByPk(userId)
+      const [manager, user] = await Promise.all([
+        Manager.findByPk(userId),
+        User.findByPk(userId)
+      ])
 
-      if (record !== null) {
+      if (user !== null || manager !== null) {
         return {
           ...ctx,
-          role: role,
-          [role === 'ADMIN' ? 'user' : 'manager']: record
+          role,
+          user: user || manager
         }
       }
     } catch {

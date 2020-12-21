@@ -33,6 +33,10 @@ type SignInPayload {
   refreshToken: String!
 }
 
+type User {
+  managers: [Managers]
+}
+
 extend type Mutation {
   changePassword(input: ChangePasswordInput!): ChangePasswordPayload! @auth
   forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload! @guest
