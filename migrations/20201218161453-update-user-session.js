@@ -1,5 +1,5 @@
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
+  up: (queryInterface, Sequelize) => {
     return queryInterface.addColumn('user_sessions', 'manager_id', {
       allowNull: true,
       onUpdate: 'CASCADE',

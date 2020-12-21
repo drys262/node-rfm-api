@@ -62,6 +62,14 @@ class User extends Sequelize.Model {
     })
   }
 
+  static isEmailUnique (email) {
+    return !!User.findOneByEmail(email)
+  }
+
+  static isName (name) {
+    return name !== ''
+  }
+
   static isPassword (password) {
     return validator.isLength(password, { min: 6 })
   }

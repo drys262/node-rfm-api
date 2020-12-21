@@ -30,8 +30,7 @@ module.exports.resolvers = {
         })
       }
 
-      const record = ctx.user
-      const passwordsMatch = await bcrypt.compare(password, record.password)
+      const passwordsMatch = await bcrypt.compare(password, ctx.user.password)
 
       if (!passwordsMatch) {
         throw new UserInputError('Invalid email or password', {
@@ -41,7 +40,7 @@ module.exports.resolvers = {
 
       const payload = {
         role: user ? 'ADMIN' : 'MANAGER',
-        userId: record.id
+        userId: ctx.user.id
       }
 
       const [accessToken, refreshToken] = await Promise.all([
@@ -50,7 +49,7 @@ module.exports.resolvers = {
       ])
 
       await UserSession.create({
-        [user ? 'userId' : 'managerId']: record.id,
+        [user ? 'userId' : 'managerId']: ctx.user.id,
         refreshToken: refreshToken
       })
 
@@ -81,7 +80,7 @@ module.exports.resolvers = {
       try {
         await ctx.mail.send({
           from: process.env.SENDGRID_EMAIL,
-          to: email,
+          to: record.email,
           subject: 'New Password',
           text: `Your new password: ${newPassword}`
         })
@@ -132,7 +131,6 @@ module.exports.resolvers = {
       return { accessToken: newAccessToken }
     },
     changePassword: async (parent, args, ctx) => {
-      const record = ctx.user
       const { oldPassword, newPassword } = args.input
 
       if (!User.isPassword(oldPassword)) {
@@ -147,7 +145,7 @@ module.exports.resolvers = {
 
       const passwordsMatch = await bcrypt.compare(
         oldPassword,
-        record.password
+        ctx.user.password
       )
 
       if (!passwordsMatch) {
@@ -157,7 +155,7 @@ module.exports.resolvers = {
       }
 
       const newPasswordHash = await bcrypt.hash(newPassword, 10)
-      await record.update({ password: newPasswordHash })
+      await ctx.user.update({ password: newPasswordHash })
 
       return { success: true }
     }

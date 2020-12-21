@@ -10,13 +10,14 @@ input UpdateManagerInput {
 }
 
 type Manager {
-  createdAt: Date!
-  updatedAt: Date
+  createdAt: DateTime!
   email: String!
   id: ID!
   name: String!
+  userSessions: [UserSession]
   userId: ID!
   user: User!
+  updatedAt: DateTime
 }
 
 extend type Mutation {

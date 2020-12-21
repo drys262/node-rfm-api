@@ -33,8 +33,9 @@ type SignInPayload {
   refreshToken: String!
 }
 
-type User {
-  managers: [Managers]
+type UserSession {
+  id: ID!
+  refreshToken: String!
 }
 
 extend type Mutation {

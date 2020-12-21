@@ -39,10 +39,11 @@ module.exports = {
         }
       })
 
-      await queryInterface.addIndex('managers',
-        ['user_id', 'email', 'deleted_at'],
+      await queryInterface.addIndex(
+        'managers',
+        ['email', 'deleted_at'],
         {
-          name: 'managers_user_id_email_deleted_at_ukey',
+          name: 'managers_email_deleted_at_ukey',
           transaction: transaction,
           unique: true
         }

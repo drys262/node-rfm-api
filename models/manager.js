@@ -1,5 +1,4 @@
 const Sequelize = require('sequelize')
-const validator = require('validator')
 
 class Manager extends Sequelize.Model {
   static associate (models) {
@@ -17,9 +16,9 @@ class Manager extends Sequelize.Model {
     return super.init({
       id: {
         allowNull: false,
-        defaultValue: Sequelize.UUIDV4,
+        defaultValue: Sequelize.UUID,
         primaryKey: true,
-        type: Sequelize.UUIDV4
+        type: Sequelize.UUID
       },
       name: {
         allowNull: false,
@@ -37,17 +36,6 @@ class Manager extends Sequelize.Model {
       modelName: 'manager',
       paranoid: true,
       sequelize: sequelize
-    })
-  }
-
-  static isEmail (email) {
-    return validator.isEmail(email, {
-      allow_display_name: false,
-      allow_ip_domain: false,
-      allow_utf8_local_part: false,
-      domain_specific_validation: false,
-      require_display_name: false,
-      require_tld: true
     })
   }
 }

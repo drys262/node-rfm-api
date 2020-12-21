@@ -21,6 +21,7 @@ module.exports = async ({ req }) => {
   if (validator.isJWT(token)) {
     try {
       const { userId, role } = await jwt.verify(token, process.env.SECRET)
+
       const [manager, user] = await Promise.all([
         Manager.findByPk(userId),
         User.findByPk(userId)
@@ -29,8 +30,8 @@ module.exports = async ({ req }) => {
       if (user !== null || manager !== null) {
         return {
           ...ctx,
-          role,
-          user: user || manager
+          role: role,
+          user: manager || user
         }
       }
     } catch {

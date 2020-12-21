@@ -1,4 +1,4 @@
-const AuthDirective = require('./manager')
+const AuthDirective = require('./auth')
 const GuestDirective = require('./guest')
 const ManagerDirective = require('./manager')
 const UserDirective = require('./user')
