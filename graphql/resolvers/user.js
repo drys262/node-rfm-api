@@ -6,7 +6,7 @@ const { Manager, User, UserSession } = require('../../models')
 
 module.exports.resolvers = {
   Mutation: {
-    signIn: async (parent, args, ctx) => {
+    signIn: async (parent, args) => {
       const { email, password } = args.input
 
       if (!User.isEmail(email)) {

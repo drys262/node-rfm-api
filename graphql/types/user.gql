@@ -37,10 +37,12 @@ type UserSession implements Node {
   createdAt: DateTime!
   databaseId: UUID!
   id: ID!
-  refresh_token: String!
+  manager: Manager
+  managerId: ID
+  refreshToken: String!
   updatedAt: DateTime!
   # user: User!
-  userId: ID!
+  userId: ID
 }
 
 extend type Mutation {

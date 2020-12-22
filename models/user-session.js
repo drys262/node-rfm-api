@@ -8,7 +8,9 @@ class UserSession extends Sequelize.Model {
   }
 
   static findByUserIdAndRefreshToken (userId, refreshToken) {
-    return UserSession.findOne({ userId, refreshToken })
+    return UserSession.findOne({
+      where: { userId, refreshToken }
+    })
   }
 
   static init (sequelize) {
@@ -24,14 +26,26 @@ class UserSession extends Sequelize.Model {
         type: Sequelize.STRING
       }
     }, {
+      hooks: {
+        afterDestroy: (node) => {
+          const { userSession: UserSession } = sequelize.models
+
+          return UserSession.destroy({
+            individualHooks: true,
+            where: {
+              managerId: node.id
+            }
+          })
+        }
+      },
       modelName: 'userSession',
       paranoid: true,
       sequelize: sequelize
     })
   }
 
-  static isToken (refreshToken) {
-    return validator.isJWT(refreshToken)
+  static isToken (token) {
+    return validator.isJWT(token)
   }
 }
 

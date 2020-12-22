@@ -25,17 +25,17 @@ const getNode = async (parent, args, ctx) => {
 const process = async (parent, args, ctx, info, action) => {
   const { email, name, password } = args.input
 
-  if (action === 'create' && !User.isPassword(password)) {
-    throw new UserInputError('Invalid password', {
-      invalidArgs: ['password']
-    })
-  } else if (!User.isEmail(email)) {
+  if (!User.isEmail(email)) {
     throw new UserInputError('Invalid email', {
       invalidArgs: ['email']
     })
   } else if (!User.isName(name)) {
     throw new UserInputError('Invalid name', {
       invalidArgs: ['name']
+    })
+  } else if (action === 'create' & !User.isPassword(password)) {
+    throw new UserInputError('Invalid password', {
+      invalidArgs: ['password']
     })
   }
 

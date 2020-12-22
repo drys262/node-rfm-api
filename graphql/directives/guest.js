@@ -9,7 +9,7 @@ class GuestDirective extends SchemaDirectiveVisitor {
 
     field.resolve = function (root, args, ctx, info) {
       if (ctx.user !== null) {
-        throw new AuthenticationError('Authenticated')
+        throw new AuthenticationError('Authorized')
       }
 
       return resolve.call(this, root, args, ctx, info)

@@ -38,6 +38,11 @@ class Manager extends Sequelize.Model {
       sequelize: sequelize
     })
   }
+
+  static async isEmailUnique (email) {
+    const node = await Manager.findOneByEmail(email)
+    return node === null
+  }
 }
 
 module.exports = Manager

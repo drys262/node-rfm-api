@@ -3,56 +3,54 @@ const faker = require('faker')
 
 module.exports = {
   up: async (queryInterface) => {
-    const passwordHash = await bcrypt.hash('password', 10)
+    const transaction = await queryInterface.sequelize.transaction()
 
-    const users = [...Array(100).keys()].map(() => {
-      const firstName = faker.name.firstName()
-      const lastName = faker.name.lastName()
+    try {
+      const userAdminQuery = 'SELECT * ' +
+        'FROM users ' +
+        "WHERE email = 'admin@example.com' " +
+        'LIMIT 1;'
 
-      return {
-        id: faker.random.uuid(),
-        email: faker.internet.email(firstName, lastName).toLowerCase(),
-        name: faker.name.findName(firstName, lastName),
-        password: passwordHash,
-        created_at: new Date(),
-        updated_at: new Date()
-      }
-    })
+      const users = await queryInterface.sequelize.query(userAdminQuery, {
+        transaction: transaction,
+        type: queryInterface.sequelize.QueryTypes.SELECT
+      })
 
-    await queryInterface.bulkInsert('users', users)
+      const user = users[0]
+      const passwordHash = await bcrypt.hash('password', 10)
 
-    const managers = users.map(user => {
-      const firstName = faker.name.firstName()
-      const lastName = faker.name.lastName()
+      const managers = [...Array(100).keys()].map(() => {
+        const firstName = faker.name.firstName()
+        const lastName = faker.name.lastName()
 
-      return {
+        return {
+          id: faker.random.uuid(),
+          user_id: user.id,
+          email: faker.internet.email(firstName, lastName).toLowerCase(),
+          name: faker.name.findName(firstName, lastName),
+          password: passwordHash,
+          created_at: new Date(),
+          updated_at: new Date()
+        }
+      })
+
+      managers.push({
         id: faker.random.uuid(),
         user_id: user.id,
-        email: faker.internet.email(firstName, lastName).toLowerCase(),
-        name: faker.name.findName(firstName, lastName),
+        email: 'manager@example.com',
+        name: faker.name.findName('Manager', 'Example'),
         password: passwordHash,
         created_at: new Date(),
         updated_at: new Date()
-      }
-    })
+      })
 
-    const records = await queryInterface.sequelize.query(
-      "SELECT * FROM users where email = 'admin@example.com'"
-    )
+      await queryInterface.bulkInsert('managers', managers)
 
-    const user = records[0][0]
-
-    managers.push({
-      id: faker.random.uuid(),
-      user_id: user.id,
-      email: 'manager@example.com',
-      name: faker.name.findName('manager', 'example'),
-      password: passwordHash,
-      created_at: new Date(),
-      updated_at: new Date()
-    })
-
-    return queryInterface.bulkInsert('managers', managers)
+      await transaction.commit()
+    } catch (err) {
+      await transaction.rollback()
+      throw err
+    }
   },
   down: (queryInterface) => {
     return queryInterface.bulkDelete('managers')

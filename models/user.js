@@ -45,6 +45,29 @@ class User extends Sequelize.Model {
         type: Sequelize.STRING(60)
       }
     }, {
+      hooks: {
+        afterDestroy: (node) => {
+          const {
+            userSession: UserSession,
+            manager: Manager
+          } = sequelize.models
+
+          return Promise.all([
+            UserSession.destroy({
+              individualHooks: true,
+              where: {
+                userId: node.id
+              }
+            }),
+            Manager.destroy({
+              individualHooks: true,
+              where: {
+                userId: node.id
+              }
+            })
+          ])
+        }
+      },
       modelName: 'user',
       paranoid: true,
       sequelize: sequelize

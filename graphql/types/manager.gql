@@ -15,8 +15,8 @@ type Manager implements Node {
   email: String!
   id: ID!
   name: String!
-  # user: User!
   updatedAt: DateTime!
+  # user: User!
   userId: ID!
   userSessions: [UserSession!]!
 }
