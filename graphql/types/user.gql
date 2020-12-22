@@ -34,13 +34,13 @@ type SignInPayload {
 }
 
 type UserSession implements Node {
-  created_at: DateTime!
+  createdAt: DateTime!
   databaseId: UUID!
   id: ID!
   refresh_token: String!
-  user_id: ID!
-  user: User!
-  updated_at: DateTime!
+  updatedAt: DateTime!
+  userId: ID!
+  # user: User!
 }
 
 extend type Mutation {

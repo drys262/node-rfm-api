@@ -25,7 +25,7 @@ const getNode = async (parent, args, ctx) => {
 const process = async (parent, args, ctx, info, action) => {
   const { email, name, password } = args.input
 
-  if (!User.isPassword(password)) {
+  if (action === 'create' && !User.isPassword(password)) {
     throw new UserInputError('Invalid password', {
       invalidArgs: ['password']
     })
@@ -39,7 +39,7 @@ const process = async (parent, args, ctx, info, action) => {
     })
   }
 
-  const isEmailUnique = await User.isEmailUnique(email, ctx.user.id)
+  const isEmailUnique = await User.isEmailUnique(email)
 
   if (!isEmailUnique) {
     throw new UserInputError('Email should be unique', {

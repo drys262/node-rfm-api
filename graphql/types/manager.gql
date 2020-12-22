@@ -10,15 +10,15 @@ input UpdateManagerInput {
 }
 
 type Manager implements Node {
-  created_at: DateTime!
+  createdAt: DateTime!
   databaseId: UUID!
   email: String!
   id: ID!
   name: String!
   # user: User!
-  user_id: ID!
+  updatedAt: DateTime!
+  userId: ID!
   userSessions: [UserSession!]!
-  updated_at: DateTime!
 }
 
 extend type Mutation {

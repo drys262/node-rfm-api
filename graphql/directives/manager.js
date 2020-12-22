@@ -8,7 +8,7 @@ class ManagerDirective extends SchemaDirectiveVisitor {
     const { resolve } = field
 
     field.resolve = function (root, args, ctx, info) {
-      if (ctx.role === 'MANAGER') {
+      if (ctx.role !== 'MANAGER') {
         throw new AuthenticationError('Unauthenticated')
       }
 

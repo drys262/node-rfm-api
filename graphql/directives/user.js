@@ -8,7 +8,7 @@ class UserDirective extends SchemaDirectiveVisitor {
     const { resolve } = field
 
     field.resolve = function (root, args, ctx, info) {
-      if (ctx.role === 'ADMIN') {
+      if (ctx.role !== 'ADMIN') {
         throw new AuthenticationError('Unauthenticated')
       }
 
