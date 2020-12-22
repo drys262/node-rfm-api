@@ -39,8 +39,8 @@ type UserSession implements Node {
   id: ID!
   refresh_token: String!
   updatedAt: DateTime!
-  userId: ID!
   # user: User!
+  userId: ID!
 }
 
 extend type Mutation {
