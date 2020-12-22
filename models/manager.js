@@ -16,7 +16,7 @@ class Manager extends Sequelize.Model {
     return super.init({
       id: {
         allowNull: false,
-        defaultValue: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
         type: Sequelize.UUID
       },

@@ -30,7 +30,8 @@ module.exports.resolvers = {
         })
       }
 
-      const passwordsMatch = await bcrypt.compare(password, ctx.user.password)
+      const record = user || manager
+      const passwordsMatch = await bcrypt.compare(password, record.password)
 
       if (!passwordsMatch) {
         throw new UserInputError('Invalid email or password', {
@@ -38,10 +39,7 @@ module.exports.resolvers = {
         })
       }
 
-      const payload = {
-        role: user ? 'ADMIN' : 'MANAGER',
-        userId: ctx.user.id
-      }
+      const payload = { userId: record.id }
 
       const [accessToken, refreshToken] = await Promise.all([
         jwt.sign(payload, process.env.SECRET, { expiresIn: '1h' }),
@@ -49,7 +47,7 @@ module.exports.resolvers = {
       ])
 
       await UserSession.create({
-        [user ? 'userId' : 'managerId']: ctx.user.id,
+        [user ? 'userId' : 'managerId']: record.id,
         refreshToken: refreshToken
       })
 

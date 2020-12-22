@@ -4,10 +4,10 @@ const bcrypt = require('bcrypt')
 const { Manager, User } = require('../../models')
 const { decodeId } = require('./node')
 
-const getNode = async (parent, args) => {
+const getNode = async (parent, args, ctx) => {
   const { id } = decodeId(args.id)
 
-  const nodes = await Manager.findAll({
+  const nodes = await ctx.user.getManagers({
     where: { id }
   })
 
@@ -51,10 +51,6 @@ const process = async (parent, args, ctx, info, action) => {
 
   if (action === 'create') {
     node = Manager.build({ userId: ctx.user.id })
-
-    const passwordHash = await bcrypt.hash(password, 10)
-
-    node.password = passwordHash
   } else {
     node = await getNode(parent, args, ctx, info)
   }
@@ -62,20 +58,23 @@ const process = async (parent, args, ctx, info, action) => {
   node.email = email.trim()
   node.name = name.trim()
 
+  if (action === 'create') {
+    node.password = await bcrypt.hash(password, 10)
+  }
+
   return node.save()
 }
 
 module.exports.resolvers = {
   Mutation: {
-    createManager: async (parent, args, ctx, info) => {
+    createManager: (parent, args, ctx, info) => {
       return process(parent, args, ctx, info, 'create')
     },
     deleteManager: async (parent, args, ctx) => {
-      const manager = await getNode(parent, args)
-
+      const manager = await getNode(parent, args, ctx)
       return manager.destroy()
     },
-    updateManager: async (parent, args, ctx, info) => {
+    updateManager: (parent, args, ctx, info) => {
       return process(parent, args, ctx, info, 'update')
     }
   }

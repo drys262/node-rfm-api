@@ -39,15 +39,11 @@ module.exports = {
         }
       })
 
-      await queryInterface.addIndex(
-        'managers',
-        ['email', 'deleted_at'],
-        {
-          name: 'managers_email_deleted_at_ukey',
-          transaction: transaction,
-          unique: true
-        }
-      )
+      await queryInterface.addIndex('managers', ['email', 'deleted_at'], {
+        name: 'managers_email_deleted_at_ukey',
+        transaction: transaction,
+        unique: true
+      })
 
       await transaction.commit()
     } catch (err) {

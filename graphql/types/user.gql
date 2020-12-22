@@ -1,6 +1,6 @@
 input ChangePasswordInput {
-  oldPassword: String!
   newPassword: String!
+  oldPassword: String!
 }
 
 input ForgotPasswordInput {
@@ -33,14 +33,19 @@ type SignInPayload {
   refreshToken: String!
 }
 
-type UserSession {
+type UserSession implements Node {
+  created_at: DateTime!
+  databaseId: UUID!
   id: ID!
-  refreshToken: String!
+  refresh_token: String!
+  user_id: ID!
+  user: User!
+  updated_at: DateTime!
 }
 
 extend type Mutation {
-  changePassword(input: ChangePasswordInput!): ChangePasswordPayload! @auth
-  forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload! @guest
-  refreshToken(input: RefreshTokenInput!): RefreshTokenPayload! @guest
-  signIn(input: SignInInput!): SignInPayload! @guest
+  changePassword (input: ChangePasswordInput!): ChangePasswordPayload! @auth
+  forgotPassword (input: ForgotPasswordInput!): ForgotPasswordPayload! @guest
+  refreshToken (input: RefreshTokenInput!): RefreshTokenPayload! @guest
+  signIn (input: SignInInput!): SignInPayload! @guest
 }

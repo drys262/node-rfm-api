@@ -9,19 +9,20 @@ input UpdateManagerInput {
   name: String
 }
 
-type Manager {
-  createdAt: DateTime!
+type Manager implements Node {
+  created_at: DateTime!
+  databaseId: UUID!
   email: String!
   id: ID!
   name: String!
-  userSessions: [UserSession]
-  userId: ID!
-  user: User!
-  updatedAt: DateTime
+  # user: User!
+  user_id: ID!
+  userSessions: [UserSession!]!
+  updated_at: DateTime!
 }
 
 extend type Mutation {
-  createManager(input: CreateManagerInput!): Manager! @user
-  deleteManager(id: ID!): Manager! @user
-  updateManager(id: ID!, input: UpdateManagerInput!): Manager! @user
+  createManager (input: CreateManagerInput!): Manager! @user
+  deleteManager (id: ID!): Manager! @user
+  updateManager (id: ID!, input: UpdateManagerInput!): Manager! @user
 }

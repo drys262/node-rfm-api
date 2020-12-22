@@ -62,12 +62,13 @@ class User extends Sequelize.Model {
     })
   }
 
-  static isEmailUnique (email) {
-    return !!User.findOneByEmail(email)
+  static async isEmailUnique (email) {
+    const node = await User.findOneByEmail(email)
+    return node === null
   }
 
   static isName (name) {
-    return name !== ''
+    return !validator.isEmpty(name)
   }
 
   static isPassword (password) {
