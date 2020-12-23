@@ -7,10 +7,12 @@ class UserSession extends Sequelize.Model {
     UserSession.belongsTo(models.User)
   }
 
-  static findByUserIdAndRefreshToken (id, refreshToken, role) {
+  static async findByUserIdAndRefreshToken (userId, refreshToken, models) {
+    const user = await models.User.findByPk(userId)
+
     return UserSession.findOne({
       where: {
-        [role === 'ADMIN' ? 'userId' : 'managerId']: id,
+        [user ? 'userId' : 'managerId']: userId,
         refreshToken
       }
     })

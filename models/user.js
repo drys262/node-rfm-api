@@ -53,7 +53,7 @@ class User extends Sequelize.Model {
           } = sequelize.models
 
           return Promise.all(
-            [Manager, UserSession].map(Model => {
+            [Manager, UserSession].map((Model) => {
               return Model.destroy({
                 individualHooks: true,
                 where: {

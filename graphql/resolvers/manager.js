@@ -68,11 +68,11 @@ const process = async (parent, args, ctx, info, action) => {
 
 module.exports.resolvers = {
   Manager: {
-    userSessions: (parent) => {
-      return parent.getUserSessions()
-    },
     userId: (parent) => {
       return encodeId(upperFirst(User.options.name.singular), parent.userId)
+    },
+    userSessions: (parent) => {
+      return parent.getUserSessions()
     }
   },
   Mutation: {

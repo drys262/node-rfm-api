@@ -42,9 +42,23 @@ module.exports = {
         {
           name: 'user_sessions_refresh_token_deleted_at_ukey',
           transaction: transaction,
-          unique: true
+          unique: true,
+          where: {
+            deleted_at: {
+              [Sequelize.Op.ne]: null
+            }
+          }
         }
       )
+
+      await queryInterface.addIndex('user_sessions', ['refresh_token'], {
+        name: 'user_sessions_refresh_token_ukey',
+        transaction: transaction,
+        unique: true,
+        where: {
+          deleted_at: null
+        }
+      })
 
       await transaction.commit()
     } catch (err) {

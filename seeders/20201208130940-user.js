@@ -32,7 +32,6 @@ module.exports = {
       })
 
       await queryInterface.bulkInsert('users', users)
-
       await transaction.commit()
     } catch (err) {
       await transaction.rollback()
