@@ -33,6 +33,18 @@ class Manager extends Sequelize.Model {
         type: Sequelize.STRING(60)
       }
     }, {
+      hooks: {
+        afterDestroy: (node) => {
+          const { userSession: UserSession } = sequelize.models
+
+          return UserSession.destroy({
+            individualHooks: true,
+            where: {
+              managerId: node.id
+            }
+          })
+        }
+      },
       modelName: 'manager',
       paranoid: true,
       sequelize: sequelize

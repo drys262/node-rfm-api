@@ -48,24 +48,20 @@ class User extends Sequelize.Model {
       hooks: {
         afterDestroy: (node) => {
           const {
-            userSession: UserSession,
-            manager: Manager
+            manager: Manager,
+            userSession: UserSession
           } = sequelize.models
 
-          return Promise.all([
-            UserSession.destroy({
-              individualHooks: true,
-              where: {
-                userId: node.id
-              }
-            }),
-            Manager.destroy({
-              individualHooks: true,
-              where: {
-                userId: node.id
-              }
+          return Promise.all(
+            [Manager, UserSession].map(Model => {
+              return Model.destroy({
+                individualHooks: true,
+                where: {
+                  userId: node.id
+                }
+              })
             })
-          ])
+          )
         }
       },
       modelName: 'user',

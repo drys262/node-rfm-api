@@ -48,7 +48,21 @@ module.exports = {
       await queryInterface.addIndex('managers', ['email', 'deleted_at'], {
         name: 'managers_email_deleted_at_ukey',
         transaction: transaction,
-        unique: true
+        unique: true,
+        where: {
+          deleted_at: {
+            [Sequelize.Op.ne]: null
+          }
+        }
+      })
+
+      await queryInterface.addIndex('managers', ['email'], {
+        name: 'managers_email_ukey',
+        transaction: transaction,
+        unique: true,
+        where: {
+          deleted_at: null
+        }
       })
 
       await transaction.commit()

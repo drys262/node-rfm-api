@@ -41,7 +41,7 @@ type UserSession implements Node {
   managerId: ID
   refreshToken: String!
   updatedAt: DateTime!
-  # user: User!
+  # user: User
   userId: ID
 }
 

@@ -7,9 +7,12 @@ class UserSession extends Sequelize.Model {
     UserSession.belongsTo(models.User)
   }
 
-  static findByUserIdAndRefreshToken (userId, refreshToken) {
+  static findByUserIdAndRefreshToken (id, refreshToken, role) {
     return UserSession.findOne({
-      where: { userId, refreshToken }
+      where: {
+        [role === 'ADMIN' ? 'userId' : 'managerId']: id,
+        refreshToken
+      }
     })
   }
 
@@ -26,18 +29,6 @@ class UserSession extends Sequelize.Model {
         type: Sequelize.STRING
       }
     }, {
-      hooks: {
-        afterDestroy: (node) => {
-          const { userSession: UserSession } = sequelize.models
-
-          return UserSession.destroy({
-            individualHooks: true,
-            where: {
-              managerId: node.id
-            }
-          })
-        }
-      },
       modelName: 'userSession',
       paranoid: true,
       sequelize: sequelize

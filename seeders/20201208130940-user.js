@@ -4,9 +4,10 @@ const faker = require('faker')
 module.exports = {
   up: async (queryInterface) => {
     const transaction = await queryInterface.sequelize.transaction()
-    const passwordHash = await bcrypt.hash('password', 10)
 
     try {
+      const passwordHash = await bcrypt.hash('password', 10)
+
       const users = [...Array(100).keys()].map(() => {
         const firstName = faker.name.firstName()
         const lastName = faker.name.lastName()
@@ -31,6 +32,8 @@ module.exports = {
       })
 
       await queryInterface.bulkInsert('users', users)
+
+      await transaction.commit()
     } catch (err) {
       await transaction.rollback()
       throw err

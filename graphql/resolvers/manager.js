@@ -1,8 +1,9 @@
 const { UserInputError } = require('apollo-server-express')
 const bcrypt = require('bcrypt')
+const { upperFirst } = require('lodash')
 
 const { Manager, User } = require('../../models')
-const { decodeId } = require('./node')
+const { decodeId, encodeId } = require('./node')
 
 const getNode = async (parent, args, ctx) => {
   const { id } = decodeId(args.id)
@@ -33,13 +34,13 @@ const process = async (parent, args, ctx, info, action) => {
     throw new UserInputError('Invalid name', {
       invalidArgs: ['name']
     })
-  } else if (action === 'create' & !User.isPassword(password)) {
+  } else if (action === 'create' && !User.isPassword(password)) {
     throw new UserInputError('Invalid password', {
       invalidArgs: ['password']
     })
   }
 
-  const isEmailUnique = await User.isEmailUnique(email)
+  const isEmailUnique = await Manager.isEmailUnique(email)
 
   if (!isEmailUnique) {
     throw new UserInputError('Email should be unique', {
@@ -66,6 +67,14 @@ const process = async (parent, args, ctx, info, action) => {
 }
 
 module.exports.resolvers = {
+  Manager: {
+    userSessions: (parent) => {
+      return parent.getUserSessions()
+    },
+    userId: (parent) => {
+      return encodeId(upperFirst(User.options.name.singular), parent.userId)
+    }
+  },
   Mutation: {
     createManager: (parent, args, ctx, info) => {
       return process(parent, args, ctx, info, 'create')

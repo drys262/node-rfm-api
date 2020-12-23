@@ -5,8 +5,8 @@ input CreateManagerInput {
 }
 
 input UpdateManagerInput {
-  email: String
-  name: String
+  email: String!
+  name: String!
 }
 
 type Manager implements Node {

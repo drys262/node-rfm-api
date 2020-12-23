@@ -109,9 +109,15 @@ module.exports.resolvers = {
         })
       }
 
+      const [user, manager] = await Promise.all([
+        User.findByPk(userId),
+        Manager.findByPk(userId)
+      ])
+
       const userSession = await UserSession.findByUserIdAndRefreshToken(
-        userId,
-        refreshToken
+        user ? user.id : manager.id,
+        refreshToken,
+        user ? 'ADMIN' : 'MANAGER'
       )
 
       if (userSession === null) {
